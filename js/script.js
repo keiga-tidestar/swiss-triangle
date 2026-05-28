@@ -43,6 +43,20 @@ function calcOfficialRounds(effectivePlayers, hasFinalDraft) {
   }
 }
 
+/**
+ * 実効人数・決勝ドラフト有無・スイスなしフラグから自動カットモードを返す。
+ * 付録E の決勝ラウンド列に準拠:
+ *   スイスなし → none
+ *   9-16 + 決勝ドラフトあり → top8
+ *   9-16 + 決勝ドラフトなし → top4
+ *   17以上 → top8
+ */
+function calcAutoCutMode(effectivePlayers, hasFinalDraft, noSwiss) {
+  if (noSwiss) return 'none';
+  if (effectivePlayers <= 16) return hasFinalDraft ? 'top8' : 'top4';
+  return 'top8';
+}
+
 // ---------------------------------------------------------
 //  【ロジック】スイスドロー分布計算
 // ---------------------------------------------------------
@@ -423,9 +437,23 @@ function recalculate() {
     skipMsg.textContent = '8人以下のためスイスドロー分布計算をスキップ。';
     frag.appendChild(skipMsg);
   } else if (total > 0) {
+    // カットモードを解決（自動の場合は付録Eの決勝ラウンド列から導出）
+    const cutModeRaw = document.querySelector('input[name="cutMode"]:checked').value;
+    const cutMode = cutModeRaw === 'auto'
+      ? calcAutoCutMode(effectivePlayers, hasFinalDraft, official.noSwiss)
+      : cutModeRaw;
+
+    // 自動選択時は算出情報にカット内容を追記
+    if (cutModeRaw === 'auto') {
+      const cutLabel = { top8: 'Top8', top4: 'Top4', none: 'なし' }[cutMode];
+      const cutText = document.createElement('p');
+      cutText.style.cssText = 'font-size:0.9rem;';
+      cutText.textContent = `自動カット: ${cutLabel}`;
+      infoSection.appendChild(cutText);
+    }
+
     // 全ラウンドの分布を計算
     const snapshots = simulateAllRounds(total, bye1, bye2, bye3, rounds);
-    const cutMode = document.querySelector('input[name="cutMode"]:checked').value;
     renderGrid(frag, snapshots, rounds);
     renderFinalTable(frag, snapshots[snapshots.length - 1].dist, rounds, cutMode);
     renderCumulativeTable(frag, snapshots[snapshots.length - 1].dist, rounds, cutMode);
