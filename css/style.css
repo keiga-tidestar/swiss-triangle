@@ -51,6 +51,7 @@ input[type="number"] {
 input[type="number"]:focus { outline: none; border-color: #1a6fba; background: #fff; }
 input[type="radio"], input[type="checkbox"] { accent-color: #1a6fba; }
 .indent { margin-left: 1.5rem; }
+.bye-sep { margin-left: 0.75rem; }
 
 /* ── 出力パネル ── */
 .output-section {
