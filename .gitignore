@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# エディタ
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
