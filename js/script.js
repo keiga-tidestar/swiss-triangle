@@ -409,37 +409,38 @@ function recalculate() {
   const official = calcOfficialRounds(effectivePlayers, hasFinalDraft);
   const rounds = roundMode === 'auto' ? official.rounds : manualRounds;
 
-  // 算出情報
-  const infoSection = document.createElement('div');
-  infoSection.className = 'input-section';
-  const infoH = document.createElement('h2');
-  infoH.textContent = '算出情報';
-  infoSection.appendChild(infoH);
+  const isNoSwiss = official.noSwiss && roundMode === 'auto';
 
-  const infoText = document.createElement('p');
-  infoText.style.cssText = 'font-size:0.9rem;margin-bottom:0.25rem;';
-  infoText.textContent = `実効人数: ${effectivePlayers}人（総参加者:${total}, 1bye:${bye1}, 2bye:${bye2}, 3bye:${bye3}）`;
-  infoSection.appendChild(infoText);
-
-  const roundText = document.createElement('p');
-  roundText.style.cssText = 'font-size:0.9rem;';
-  if (official.noSwiss && roundMode === 'auto') {
-    roundText.textContent = `規定: ${official.swissInfo} ／ 使用ラウンド数: ${rounds}`;
-  } else {
-    roundText.textContent = `規定ラウンド数: ${official.rounds} ／ 使用ラウンド数: ${rounds}${roundMode === 'manual' ? '（手動指定）' : ''}`;
-  }
-  infoSection.appendChild(roundText);
-  fragInfo.appendChild(infoSection);
-
-  // スイスなしの場合は分布計算スキップ
-  if (!(official.noSwiss && roundMode === 'auto') && total > 0) {
+  if (!isNoSwiss && total > 0) {
     // カットモードを解決（自動の場合は付録Eの決勝ラウンド列から導出）
     const cutModeRaw = document.querySelector('input[name="cutMode"]:checked').value;
     const cutMode = cutModeRaw === 'auto'
       ? calcAutoCutMode(effectivePlayers, hasFinalDraft, official.noSwiss)
       : cutModeRaw;
 
-    // 自動選択時は算出情報にカット内容を追記
+    // 全ラウンドの分布を計算
+    const snapshots = simulateAllRounds(total, bye1, bye2, bye3, rounds);
+
+    // グリッド
+    renderGrid(fragGrid, snapshots, rounds);
+
+    // 算出情報
+    const infoSection = document.createElement('div');
+    infoSection.className = 'input-section';
+    const infoH = document.createElement('h2');
+    infoH.textContent = '算出情報';
+    infoSection.appendChild(infoH);
+
+    const infoText = document.createElement('p');
+    infoText.style.cssText = 'font-size:0.9rem;margin-bottom:0.25rem;';
+    infoText.textContent = `実効人数: ${effectivePlayers}人（総参加者:${total}, 1bye:${bye1}, 2bye:${bye2}, 3bye:${bye3}）`;
+    infoSection.appendChild(infoText);
+
+    const roundText = document.createElement('p');
+    roundText.style.cssText = 'font-size:0.9rem;';
+    roundText.textContent = `規定ラウンド数: ${official.rounds} ／ 使用ラウンド数: ${rounds}${roundMode === 'manual' ? '（手動指定）' : ''}`;
+    infoSection.appendChild(roundText);
+
     if (cutModeRaw === 'auto') {
       const cutLabel = { top8: 'Top8', top4: 'Top4', none: 'なし' }[cutMode];
       const cutText = document.createElement('p');
@@ -447,27 +448,17 @@ function recalculate() {
       cutText.textContent = `自動カット: ${cutLabel}`;
       infoSection.appendChild(cutText);
     }
+    fragInfo.appendChild(infoSection);
 
-    // 全ラウンドの分布を計算
-    const snapshots = simulateAllRounds(total, bye1, bye2, bye3, rounds);
-    renderGrid(fragGrid, snapshots, rounds);
+    // 記録別人数・累積人数
     renderFinalTable(fragTables, snapshots[snapshots.length - 1].dist, rounds, cutMode);
     renderCumulativeTable(fragTables, snapshots[snapshots.length - 1].dist, rounds, cutMode);
   }
 
-  document.getElementById('output-info').replaceChildren(fragInfo);
   document.getElementById('output-grid').replaceChildren(fragGrid);
+  document.getElementById('output-info').replaceChildren(fragInfo);
   document.getElementById('output-tables').replaceChildren(fragTables);
-
-  const isNoSwiss = official.noSwiss && roundMode === 'auto';
-  const notice = document.getElementById('pairDownNotice');
-  if (isNoSwiss) {
-    notice.textContent = '8人以下のためスイスドロー分布計算をスキップ。';
-    notice.style.color = '#888';
-  } else {
-    notice.textContent = '※ ペアダウン勝者前提の推定値。実際はドロップ・意図的な引き分け等でずれる場合あり。';
-    notice.style.color = '';
-  }
+  document.getElementById('output-top').style.display = isNoSwiss ? 'none' : '';
 }
 
 attachListeners();
