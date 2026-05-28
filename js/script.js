@@ -391,8 +391,9 @@ function renderCumulativeTable(container, dist, rounds, cutMode) {
 // ---------------------------------------------------------
 
 function recalculate() {
-  const output = document.getElementById('output');
-  const frag = document.createDocumentFragment();
+  const fragInfo   = document.createDocumentFragment();
+  const fragGrid   = document.createDocumentFragment();
+  const fragTables = document.createDocumentFragment();
 
   // 入力値を取得
   const total    = parseInt(document.getElementById('totalPlayers').value) || 0;
@@ -408,7 +409,7 @@ function recalculate() {
   const official = calcOfficialRounds(effectivePlayers, hasFinalDraft);
   const rounds = roundMode === 'auto' ? official.rounds : manualRounds;
 
-  // 規定ラウンド情報を表示
+  // 算出情報
   const infoSection = document.createElement('div');
   infoSection.className = 'input-section';
   const infoH = document.createElement('h2');
@@ -428,15 +429,10 @@ function recalculate() {
     roundText.textContent = `規定ラウンド数: ${official.rounds} ／ 使用ラウンド数: ${rounds}${roundMode === 'manual' ? '（手動指定）' : ''}`;
   }
   infoSection.appendChild(roundText);
-  frag.appendChild(infoSection);
+  fragInfo.appendChild(infoSection);
 
   // スイスなしの場合は分布計算スキップ
-  if (official.noSwiss && roundMode === 'auto') {
-    const skipMsg = document.createElement('p');
-    skipMsg.style.cssText = 'color:#888;font-size:0.85rem;padding:0.5rem;';
-    skipMsg.textContent = '8人以下のためスイスドロー分布計算をスキップ。';
-    frag.appendChild(skipMsg);
-  } else if (total > 0) {
+  if (!(official.noSwiss && roundMode === 'auto') && total > 0) {
     // カットモードを解決（自動の場合は付録Eの決勝ラウンド列から導出）
     const cutModeRaw = document.querySelector('input[name="cutMode"]:checked').value;
     const cutMode = cutModeRaw === 'auto'
@@ -454,12 +450,24 @@ function recalculate() {
 
     // 全ラウンドの分布を計算
     const snapshots = simulateAllRounds(total, bye1, bye2, bye3, rounds);
-    renderGrid(frag, snapshots, rounds);
-    renderFinalTable(frag, snapshots[snapshots.length - 1].dist, rounds, cutMode);
-    renderCumulativeTable(frag, snapshots[snapshots.length - 1].dist, rounds, cutMode);
+    renderGrid(fragGrid, snapshots, rounds);
+    renderFinalTable(fragTables, snapshots[snapshots.length - 1].dist, rounds, cutMode);
+    renderCumulativeTable(fragTables, snapshots[snapshots.length - 1].dist, rounds, cutMode);
   }
 
-  output.replaceChildren(frag);
+  document.getElementById('output-info').replaceChildren(fragInfo);
+  document.getElementById('output-grid').replaceChildren(fragGrid);
+  document.getElementById('output-tables').replaceChildren(fragTables);
+
+  const isNoSwiss = official.noSwiss && roundMode === 'auto';
+  const notice = document.getElementById('pairDownNotice');
+  if (isNoSwiss) {
+    notice.textContent = '8人以下のためスイスドロー分布計算をスキップ。';
+    notice.style.color = '#888';
+  } else {
+    notice.textContent = '※ ペアダウン勝者前提の推定値。実際はドロップ・意図的な引き分け等でずれる場合あり。';
+    notice.style.color = '';
+  }
 }
 
 attachListeners();

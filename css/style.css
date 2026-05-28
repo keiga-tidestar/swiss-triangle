@@ -124,7 +124,12 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1a6fba; }
 }
 
 /* ── ノート ── */
-.notice { font-size: 0.8rem; color: #666; margin-top: 0.5rem; }
+.notice { font-size: 0.88rem; color: #666; margin-top: 0.5rem; white-space: normal; overflow-wrap: break-word; }
+
+#pairDownNotice {
+  padding: 0 1.25rem;
+  margin: 0.85rem 0;
+}
 
 /* ── レスポンシブ ── */
 @media (max-width: 560px) {
