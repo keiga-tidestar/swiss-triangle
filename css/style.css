@@ -111,9 +111,5 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1a6fba; }
   border-radius: 3px;
 }
 
-/* ── テスト結果 ── */
-.test-pass { color: #1a7a3a; }
-.test-fail { color: #c0392b; font-weight: 600; }
-
 /* ── ノート ── */
 .notice { font-size: 0.8rem; color: #666; margin-top: 0.5rem; }

@@ -114,51 +114,45 @@ function simulateAllRounds(total, bye1, bye2, bye3, rounds) {
 }
 
 // ---------------------------------------------------------
-//  【自動テスト】規定ラウンド数の検証
+//  【自動テスト】ロジック検証（コンソール出力のみ）
 // ---------------------------------------------------------
 
-function runRoundTests() {
+function runTests() {
   const results = [];
-
   function assert(label, actual, expected) {
-    const ok = actual === expected;
-    results.push({ label, ok, actual, expected });
+    results.push({ label, ok: actual === expected, actual, expected });
   }
 
-  // テスト1: byeなし226人 → 実効226人 → 8ラウンド
+  // 規定ラウンド数
   const eff1 = calcEffectivePlayers(226, 0, 0, 0);
   assert('実効人数: 226人byeなし=226', eff1, 226);
   assert('規定ラウンド: 実効226人→8', calcOfficialRounds(eff1, false).rounds, 8);
 
-  // テスト2: byeなし227人 → 実効227人 → 9ラウンド
   const eff2 = calcEffectivePlayers(227, 0, 0, 0);
   assert('実効人数: 227人byeなし=227', eff2, 227);
   assert('規定ラウンド: 実効227人→9', calcOfficialRounds(eff2, false).rounds, 9);
 
-  // テスト3: 通常120人+1bye保持者5人 → 実効130人 → 8ラウンド（129-226区分）
-  const eff3 = calcEffectivePlayers(125, 5, 0, 0); // total=125(120通常+5bye1), bye1=5
+  const eff3 = calcEffectivePlayers(125, 5, 0, 0);
   assert('実効人数: 120人+1bye×5=130', eff3, 130);
   assert('規定ラウンド: 実効130人→8', calcOfficialRounds(eff3, false).rounds, 8);
 
-  // テスト4: 実効128人 → 7ラウンド境界
   assert('規定ラウンド: 実効128人→7', calcOfficialRounds(128, false).rounds, 7);
-  // テスト5: 実効129人 → 8ラウンド境界
   assert('規定ラウンド: 実効129人→8', calcOfficialRounds(129, false).rounds, 8);
-
-  // テスト6: 決勝ドラフトあり9〜16人 → 4ラウンド
   assert('規定ラウンド: 実効16人+決勝ドラフト→4', calcOfficialRounds(16, true).rounds, 4);
-  // テスト7: 決勝ドラフトなし9〜16人 → 5ラウンド
   assert('規定ラウンド: 実効16人なし→5', calcOfficialRounds(16, false).rounds, 5);
 
-  // テスト8（分布）: 226人・byeなし・ラウンド2終了 → 2-0:57, 1-1:112, 0-2:57
+  // 分布計算
   const snaps = simulateAllRounds(226, 0, 0, 0, 2);
-  const d2 = snaps[1].dist; // ラウンド2終了後
+  const d2 = snaps[1].dist;
   assert('分布R2: 226人 2-0=57', d2[2], 57);
   assert('分布R2: 226人 1-1=112', d2[1], 112);
   assert('分布R2: 226人 0-2=57', d2[0], 57);
-  const totalR2 = Object.values(d2).reduce((a, b) => a + b, 0);
-  assert('分布R2: 合計=226', totalR2, 226);
+  assert('分布R2: 合計=226', Object.values(d2).reduce((a, b) => a + b, 0), 226);
 
+  const failures = results.filter(r => !r.ok);
+  if (failures.length > 0) {
+    failures.forEach(r => console.error(`[TEST FAIL] ${r.label} → 期待値:${r.expected} 実際:${r.actual}`));
+  }
   return results;
 }
 
@@ -379,40 +373,6 @@ function renderCumulativeTable(container, dist, rounds, cutMode) {
 }
 
 // ---------------------------------------------------------
-//  【描画】テスト結果
-// ---------------------------------------------------------
-
-function renderTestResults(container, results) {
-  const section = document.createElement('div');
-  section.className = 'input-section';
-
-  const h = document.createElement('h2');
-  h.textContent = '自動テスト結果';
-  section.appendChild(h);
-
-  const allOk = results.every(r => r.ok);
-  const summary = document.createElement('p');
-  summary.className = allOk ? 'test-pass' : 'test-fail';
-  summary.style.cssText = 'font-weight:bold;margin-bottom:0.5rem;';
-  summary.textContent = allOk
-    ? `✓ 全${results.length}件パス`
-    : `✗ ${results.filter(r => !r.ok).length}件失敗 / ${results.length}件`;
-  section.appendChild(summary);
-
-  results.forEach(r => {
-    const row = document.createElement('div');
-    row.className = r.ok ? '' : 'test-fail';
-    row.style.cssText = 'font-size:0.82rem;margin-bottom:0.25rem;';
-    row.textContent = r.ok
-      ? `✓ ${r.label}`
-      : `✗ ${r.label} → 期待値:${r.expected} 実際:${r.actual}`;
-    section.appendChild(row);
-  });
-
-  container.appendChild(section);
-}
-
-// ---------------------------------------------------------
 //  メイン計算・描画
 // ---------------------------------------------------------
 
@@ -471,11 +431,9 @@ function recalculate() {
     renderCumulativeTable(frag, snapshots[snapshots.length - 1].dist, rounds, cutMode);
   }
 
-  // 自動テスト結果
-  renderTestResults(frag, runRoundTests());
-
   output.replaceChildren(frag);
 }
 
 attachListeners();
 recalculate();
+runTests();
