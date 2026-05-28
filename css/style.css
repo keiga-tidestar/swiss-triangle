@@ -139,6 +139,10 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1a6fba; }
   /* インデント行はモバイルで左マージンを縮小 */
   .indent { margin-left: 0.5rem; }
 
-  /* bye入力グループも全幅に */
-  .bye-inputs { width: 100%; }
+  /* bye入力グループを縦並びに（左寄せで総参加者数と揃える） */
+  .bye-inputs { width: 100%; flex-direction: column; align-items: flex-start; }
+
+  /* ラジオボタン行を縦並びに */
+  .radio-row { flex-direction: column; align-items: flex-start; }
+  .radio-row > label { min-width: 0; }
 }
