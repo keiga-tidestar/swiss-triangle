@@ -459,6 +459,7 @@ function recalculate() {
   document.getElementById('output-info').replaceChildren(fragInfo);
   document.getElementById('output-tables').replaceChildren(fragTables);
   document.getElementById('output-top').style.display = isNoSwiss ? 'none' : '';
+
 }
 
 attachListeners();
