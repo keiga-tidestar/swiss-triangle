@@ -216,7 +216,7 @@ function renderGrid(container, snapshots, rounds) {
   for (let w = rounds; w >= 0; w--) {
     const l = rounds - w;
     const th = document.createElement('th');
-    th.textContent = `${w}-${l}`;
+    th.textContent = `${w}勝`;
     hRow.appendChild(th);
   }
   thead.appendChild(hRow);
