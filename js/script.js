@@ -260,17 +260,25 @@ function renderGrid(container, snapshots, rounds) {
 function calcCutLine(dist, rounds, cutMode) {
   if (cutMode === 'none') return null;
   const cutN = cutMode === 'top8' ? 8 : 4;
-  // 高い勝ち数から累積して cutN 人に達する最低勝ち数
   let cumulative = 0;
+  let cutWins = null;
+  let cutCumulative = 0;
+  // guaranteedCutWins: 累積がcutN以下である最低勝ち数（確定で上位N人に入るライン）
+  let guaranteedCutWins = null;
   for (let w = rounds; w >= 0; w--) {
     const count = dist[w] || 0;
     if (count === 0) continue;
     cumulative += count;
-    if (cumulative >= cutN) {
-      return { cutWins: w, cumulative };
+    if (cumulative <= cutN) {
+      guaranteedCutWins = w;
+    }
+    if (cutWins === null && cumulative >= cutN) {
+      cutWins = w;
+      cutCumulative = cumulative;
     }
   }
-  return null;
+  if (cutWins === null) return null;
+  return { cutWins, cumulative: cutCumulative, guaranteedCutWins };
 }
 
 /**
@@ -311,10 +319,10 @@ function renderFinalTable(container, dist, rounds, cutMode) {
     const tdCount = document.createElement('td');
     tdCount.textContent = count;
 
-    // カット強調
-    if (cutLine && w >= cutLine.cutWins) {
+    // カット強調（確定でトップN入りできるラインのみ色付け）
+    if (cutLine && cutLine.guaranteedCutWins !== null && w >= cutLine.guaranteedCutWins) {
       tr.classList.add('cut-highlight');
-    } else if (cutLine && w === cutLine.cutWins - 1) {
+    } else if (cutLine && cutLine.guaranteedCutWins !== null && w === cutLine.guaranteedCutWins - 1) {
       tr.classList.add('cut-border');
     }
 
@@ -329,7 +337,9 @@ function renderFinalTable(container, dist, rounds, cutMode) {
     const note = document.createElement('p');
     note.className = 'cut-note';
     const cutN = cutMode === 'top8' ? 8 : 4;
-    note.textContent = `${cutMode.toUpperCase()} カットライン: ${cutLine.cutWins}勝以上（累積 ${cutLine.cumulative}人）`;
+    const noteWins = cutLine.guaranteedCutWins !== null ? cutLine.guaranteedCutWins : cutLine.cutWins;
+    const noteCumulative = noteWins !== null ? Object.keys(dist).filter(w => Number(w) >= noteWins).reduce((s, w) => s + (dist[w] || 0), 0) : cutLine.cumulative;
+    note.textContent = `${cutMode.toUpperCase()} カットライン: ${noteWins}勝以上（累積 ${noteCumulative}人）`;
     section.appendChild(note);
   }
 
@@ -373,7 +383,7 @@ function renderCumulativeTable(container, dist, rounds, cutMode) {
     const tdCount = document.createElement('td');
     tdCount.textContent = cumulative;
 
-    if (cutLine && w >= cutLine.cutWins) {
+    if (cutLine && cutLine.guaranteedCutWins !== null && w >= cutLine.guaranteedCutWins) {
       tr.classList.add('cut-highlight');
     }
 
