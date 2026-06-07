@@ -200,7 +200,7 @@ function renderGrid(container, snapshots, rounds) {
   section.className = 'output-section';
 
   const h = document.createElement('h2');
-  h.textContent = 'ラウンド別記録分布グリッド';
+  h.textContent = 'ラウンド別成績分布グリッド';
   section.appendChild(h);
 
   const table = document.createElement('table');
@@ -290,7 +290,7 @@ function renderFinalTable(container, dist, rounds, cutMode) {
   section.className = 'output-section';
 
   const h = document.createElement('h2');
-  h.textContent = `最終（R${rounds}終了後）記録別人数`;
+  h.textContent = `最終（R${rounds}終了後）成績別人数`;
   section.appendChild(h);
 
   const cutLine = calcCutLine(dist, rounds, cutMode);
@@ -300,7 +300,7 @@ function renderFinalTable(container, dist, rounds, cutMode) {
 
   const thead = document.createElement('thead');
   const hRow = document.createElement('tr');
-  ['記録', '人数'].forEach(t => {
+  ['成績', '人数'].forEach(t => {
     const th = document.createElement('th');
     th.textContent = t;
     hRow.appendChild(th);
