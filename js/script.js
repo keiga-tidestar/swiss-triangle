@@ -240,11 +240,28 @@ function onRoundModeChange() {
   recalculate();
 }
 
+/**
+ * 全入力を初期値に戻す（別の大会に切り替えるとき用）。
+ */
+function clearInputs() {
+  document.getElementById('totalPlayers').value = 0;
+  document.getElementById('bye1').value = 0;
+  document.getElementById('bye2').value = 0;
+  document.getElementById('bye3').value = 0;
+  document.getElementById('manualRounds').value = 8;
+  document.getElementById('finalDraft').checked = false;
+  document.querySelector('input[name="roundMode"][value="auto"]').checked = true;
+  document.getElementById('manualRoundRow').style.display = 'none';
+  document.querySelector('input[name="cutMode"][value="auto"]').checked = true;
+  recalculate();
+}
+
 function attachListeners() {
   ['totalPlayers','bye1','bye2','bye3','manualRounds','finalDraft'].forEach(id =>
     document.getElementById(id).addEventListener('input', recalculate));
   document.querySelectorAll('input[name="roundMode"]').forEach(r => r.addEventListener('change', onRoundModeChange));
   document.querySelectorAll('input[name="cutMode"]').forEach(r => r.addEventListener('change', recalculate));
+  document.getElementById('clearBtn').addEventListener('click', clearInputs);
 }
 
 // ---------------------------------------------------------
