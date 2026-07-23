@@ -171,6 +171,66 @@ function runTests() {
 }
 
 // ---------------------------------------------------------
+//  【永続化】入力内容をlocalStorageに保存・復元
+// ---------------------------------------------------------
+
+const STORAGE_KEY = 'swiss-triangle-state';
+
+/**
+ * 現在の入力状態をlocalStorageに保存する。
+ */
+function saveState() {
+  const state = {
+    totalPlayers: document.getElementById('totalPlayers').value,
+    bye1: document.getElementById('bye1').value,
+    bye2: document.getElementById('bye2').value,
+    bye3: document.getElementById('bye3').value,
+    manualRounds: document.getElementById('manualRounds').value,
+    finalDraft: document.getElementById('finalDraft').checked,
+    roundMode: document.querySelector('input[name="roundMode"]:checked').value,
+    cutMode: document.querySelector('input[name="cutMode"]:checked').value,
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // localStorageが使えない環境（プライベートブラウズ等）では何もしない
+  }
+}
+
+/**
+ * localStorageから入力状態を復元する。保存済みデータがなければ何もしない。
+ */
+function restoreState() {
+  let state;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    state = JSON.parse(raw);
+  } catch (e) {
+    return;
+  }
+
+  ['totalPlayers', 'bye1', 'bye2', 'bye3', 'manualRounds'].forEach(id => {
+    if (state[id] !== undefined) document.getElementById(id).value = state[id];
+  });
+
+  if (state.finalDraft !== undefined) {
+    document.getElementById('finalDraft').checked = state.finalDraft;
+  }
+
+  if (state.roundMode) {
+    const el = document.querySelector(`input[name="roundMode"][value="${state.roundMode}"]`);
+    if (el) el.checked = true;
+    document.getElementById('manualRoundRow').style.display = state.roundMode === 'manual' ? 'flex' : 'none';
+  }
+
+  if (state.cutMode) {
+    const el = document.querySelector(`input[name="cutMode"][value="${state.cutMode}"]`);
+    if (el) el.checked = true;
+  }
+}
+
+// ---------------------------------------------------------
 //  UIイベント登録
 // ---------------------------------------------------------
 
@@ -180,11 +240,28 @@ function onRoundModeChange() {
   recalculate();
 }
 
+/**
+ * 全入力を初期値に戻す（別の大会に切り替えるとき用）。
+ */
+function clearInputs() {
+  document.getElementById('totalPlayers').value = 0;
+  document.getElementById('bye1').value = 0;
+  document.getElementById('bye2').value = 0;
+  document.getElementById('bye3').value = 0;
+  document.getElementById('manualRounds').value = 8;
+  document.getElementById('finalDraft').checked = false;
+  document.querySelector('input[name="roundMode"][value="auto"]').checked = true;
+  document.getElementById('manualRoundRow').style.display = 'none';
+  document.querySelector('input[name="cutMode"][value="auto"]').checked = true;
+  recalculate();
+}
+
 function attachListeners() {
   ['totalPlayers','bye1','bye2','bye3','manualRounds','finalDraft'].forEach(id =>
     document.getElementById(id).addEventListener('input', recalculate));
   document.querySelectorAll('input[name="roundMode"]').forEach(r => r.addEventListener('change', onRoundModeChange));
   document.querySelectorAll('input[name="cutMode"]').forEach(r => r.addEventListener('change', recalculate));
+  document.getElementById('clearBtn').addEventListener('click', clearInputs);
 }
 
 // ---------------------------------------------------------
@@ -401,6 +478,8 @@ function renderCumulativeTable(container, dist, rounds, cutMode) {
 // ---------------------------------------------------------
 
 function recalculate() {
+  saveState();
+
   const fragInfo   = document.createDocumentFragment();
   const fragGrid   = document.createDocumentFragment();
   const fragTables = document.createDocumentFragment();
@@ -472,6 +551,7 @@ function recalculate() {
 
 }
 
+restoreState();
 attachListeners();
 recalculate();
 runTests();
