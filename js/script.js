@@ -76,7 +76,8 @@ function simulateRound(dist, round, bye1, bye2, bye3) {
   if (b === 3 && bye3 > 0) d[b] = (d[b] || 0) + bye3;
 
   // 勝ち数の高い順に処理（ペアダウン勝者前提）
-  const sortedWins = Object.keys(d).map(Number).sort((a, b) => b - a);
+  // 人数0のグループは除外（残すとペアダウン時に n=-1 となり人数が消える）
+  const sortedWins = Object.keys(d).map(Number).filter(w => d[w] > 0).sort((a, b) => b - a);
   const result = {};
   let pairDown = 0; // 上グループからのペアダウン要員 (0 or 1)
 
@@ -162,6 +163,13 @@ function runTests() {
   assert('分布R2: 226人 1-1=112', d2[1], 112);
   assert('分布R2: 226人 0-2=57', d2[0], 57);
   assert('分布R2: 合計=226', Object.values(d2).reduce((a, b) => a + b, 0), 226);
+
+  // 奇数人数で最下位グループが空になるケース（15人5ラウンド）
+  const snaps15 = simulateAllRounds(15, 0, 0, 0, 5);
+  snaps15.forEach(({ round, dist }) => {
+    assert(`分布R${round}: 15人 合計=15`, Object.values(dist).reduce((a, b) => a + b, 0), 15);
+  });
+  assert('分布R5: 15人 1-4=2', snaps15[4].dist[1], 2);
 
   const failures = results.filter(r => !r.ok);
   if (failures.length > 0) {
